@@ -26,6 +26,8 @@ A content-based movie recommendation system with Streamlit web app and Jupyter n
 4. **Similarity Computation:** Compute cosine similarity between all movie pairs
 5. **Recommendation Engine:** Sort by similarity score and return top-N matches
 
+**Link to the website:** https://movie-recommendation-system-hejeg8p3u4tyfp9rvnst77.streamlit.app
+
 ## Installation & Setup
 
 ### Requirements
