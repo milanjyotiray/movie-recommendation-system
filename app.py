@@ -301,7 +301,7 @@ def load_data():
     return movies, cosine_sim, indices
 
 def get_recommendations(selected_title, movies, cosine_sim, indices, n_recommendations=5):
-    """Returns top N recommended movies with similarity scores and metadata."""
+    """Returns top N recommended movies with normalized similarity scores and metadata."""
     title_clean = selected_title.strip().lower()
     if title_clean not in indices:
         return []
@@ -317,9 +317,21 @@ def get_recommendations(selected_title, movies, cosine_sim, indices, n_recommend
     # Skip index 0 (self-match) and take top N recommendations
     sim_scores = sim_scores[1 : n_recommendations + 1]
     
+    if not sim_scores:
+        return []
+
+    top_sim_score = sim_scores[0][1]
+    
     recommendations = []
     for i, score in sim_scores:
         row = movies.iloc[i]
+        
+        # Relative match percentage scaling for intuitive user display (top match = ~95%)
+        if top_sim_score > 0:
+            match_percentage = min(99.0, round((score / top_sim_score) * 95.0, 1))
+        else:
+            match_percentage = round(score * 100, 1)
+
         recommendations.append({
             "id": row.get("id", None),
             "title": row["title"],
@@ -328,7 +340,8 @@ def get_recommendations(selected_title, movies, cosine_sim, indices, n_recommend
             "genres": row["genres_parsed"],
             "rating": row["vote_average"],
             "year": get_release_year(row["release_date"]),
-            "similarity_score": round(score * 100, 1),
+            "similarity_score": match_percentage,
+            "raw_cosine": round(score, 4),
         })
 
     return recommendations
