@@ -16,11 +16,11 @@ st.set_page_config(
     page_title="CineMatch | AI Movie Recommender",
     page_icon="🎬",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # ---------------------------------------------------------
-# Custom CSS Styling (High Contrast Cinematic Dark Theme)
+# Custom CSS Styling (Full-Width High Contrast Dark Theme)
 # ---------------------------------------------------------
 st.markdown(
     """
@@ -30,6 +30,11 @@ st.markdown(
         background-color: #0b0f19;
         color: #f8fafc;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* Hide Sidebar Completely */
+    [data-testid="stSidebar"] {
+        display: none;
     }
 
     /* Force readable text colors across standard HTML elements */
@@ -42,23 +47,23 @@ st.markdown(
         background: linear-gradient(135deg, rgba(229, 9, 20, 0.25) 0%, rgba(139, 92, 246, 0.25) 100%);
         border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 16px;
-        padding: 2.5rem 2rem;
+        padding: 2rem 2rem;
         margin-bottom: 2rem;
         text-align: center;
     }
     
     .hero-title {
-        font-size: 2.8rem;
+        font-size: 2.6rem;
         font-weight: 800;
         color: #ffffff !important;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.4rem;
     }
     
     .hero-subtitle {
-        font-size: 1.1rem;
+        font-size: 1.05rem;
         color: #cbd5e1 !important;
         max-width: 650px;
-        margin: 0 auto 1.5rem auto;
+        margin: 0 auto 1.2rem auto;
     }
     
     .badge-pill {
@@ -210,22 +215,14 @@ st.markdown(
         color: #ffffff !important;
     }
 
-    /* Sidebar Fixes */
-    [data-testid="stSidebar"] {
-        background-color: #0f172a !important;
-        border-right: 1px solid #1e293b;
-    }
-
-    [data-testid="stSidebar"] * {
-        color: #e2e8f0 !important;
-    }
-
-    div[data-testid="stMetricValue"] {
-        color: #ffffff !important;
-    }
-
-    div[data-testid="stMetricLabel"] {
-        color: #94a3b8 !important;
+    /* Custom Main Footer */
+    .custom-footer {
+        margin-top: 3rem;
+        padding: 1.5rem;
+        border-top: 1px solid #1e293b;
+        text-align: center;
+        color: #94a3b8;
+        font-size: 0.9rem;
     }
     
     footer {visibility: hidden;}
@@ -254,25 +251,8 @@ def get_release_year(date_str):
     return "N/A"
 
 @st.cache_data(show_spinner=False)
-def fetch_poster_url(movie_title, movie_id=None, tmdb_key=""):
-    """
-    Fetches movie poster URL.
-    Attempts TMDB if key provided, otherwise automatically fetches poster via OMDb API.
-    """
-    # 1. Try TMDB if API key supplied by user
-    if tmdb_key and movie_id:
-        try:
-            url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={tmdb_key}&language=en-US"
-            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=2) as response:
-                data = json.loads(response.read().decode())
-                poster_path = data.get("poster_path")
-                if poster_path:
-                    return f"https://image.tmdb.org/t/p/w500{poster_path}"
-        except Exception:
-            pass
-
-    # 2. Automatic OMDb poster fetching fallback
+def fetch_poster_url(movie_title):
+    """Fetches movie poster URL automatically via OMDb API."""
     try:
         encoded_title = urllib.parse.quote(movie_title)
         url = f"http://www.omdbapi.com/?t={encoded_title}&apikey=trilogy"
@@ -284,7 +264,6 @@ def fetch_poster_url(movie_title, movie_id=None, tmdb_key=""):
                 return poster
     except Exception:
         pass
-
     return None
 
 # ---------------------------------------------------------
@@ -362,52 +341,19 @@ def main():
     all_titles = sorted(movies["title"].tolist())
 
     # -----------------------------------------------------
-    # Sidebar Setup
-    # -----------------------------------------------------
-    with st.sidebar:
-        st.markdown("## 🎬 **CineMatch AI**")
-        st.markdown("Content-Based Engine using TF-IDF & Cosine Similarity")
-        st.divider()
-
-        st.markdown("### ⚙️ **Recommendation Settings**")
-        n_recs = st.slider("Number of recommendations", min_value=1, max_value=10, value=5)
-
-        st.divider()
-        st.markdown("### 🔑 **TMDB API Key (Optional)**")
-        tmdb_key = st.text_input(
-            "Enter TMDB API Key (optional fallback):",
-            type="password",
-            help="Posters fetch automatically via OMDb API. You can optionally supply your TMDB API Key here."
-        )
-
-        st.divider()
-        st.markdown("### 📊 **Dataset Metrics**")
-        st.metric(label="Total Movies", value=f"{len(movies):,}")
-        st.caption("Dataset: TMDB 5000 Movies")
-        st.caption("Algorithm: TF-IDF Vectorization")
-        st.caption("Distance Metric: Cosine Similarity")
-
-        st.divider()
-        st.markdown(
-            "Built with ❤️ using **Streamlit** & **Scikit-Learn**\n\n"
-            "[🌐 Live Web App](https://movie-recommendation-system-hejeg8p3u4tyfp9rvnst77.streamlit.app) | "
-            "[💻 GitHub Repo](https://github.com/milanjyotiray/movie-recommendation-system)"
-        )
-
-    # -----------------------------------------------------
     # Main Hero Banner
     # -----------------------------------------------------
     st.markdown(
         """
         <div class="hero-container">
-            <div class="hero-title">🎬 Movie Recommendation Engine</div>
+            <div class="hero-title">🎬 CineMatch Movie Recommender</div>
             <div class="hero-subtitle">
                 Discover personalized movie recommendations powered by Natural Language Processing (NLP) & Content-Based Vector Similarity.
             </div>
             <div>
                 <span class="badge-pill">✨ TF-IDF Vectorization</span>
                 <span class="badge-pill">🎯 Cosine Similarity</span>
-                <span class="badge-pill">🍿 TMDB 5000</span>
+                <span class="badge-pill">🍿 TMDB 5000 Movies</span>
             </div>
         </div>
         """,
@@ -415,22 +361,15 @@ def main():
     )
 
     # -----------------------------------------------------
-    # Selection Bar & Surprise Button
+    # Top Control Bar (Search, Count Slider, Surprise Button)
     # -----------------------------------------------------
-    col_select, col_btn = st.columns([4, 1])
+    col_select, col_num, col_btn = st.columns([5, 3, 2])
     
     # Session state for random choice
     if "selected_movie" not in st.session_state:
         st.session_state.selected_movie = "Avatar"
 
-    with col_btn:
-        st.write("") # Alignment spacing
-        st.write("") 
-        if st.button("🎲 Surprise Me!", use_container_width=True):
-            st.session_state.selected_movie = random.choice(all_titles)
-
     with col_select:
-        # Default index lookup
         default_idx = all_titles.index(st.session_state.selected_movie) if st.session_state.selected_movie in all_titles else 0
         selected_movie = st.selectbox(
             "🔍 **Search or Choose a Movie Title:**",
@@ -438,6 +377,15 @@ def main():
             index=default_idx,
             help="Type any movie title from the TMDB 5000 dataset to get instant recommendations."
         )
+
+    with col_num:
+        n_recs = st.slider("🍿 **Number of Recommendations:**", min_value=1, max_value=10, value=6)
+
+    with col_btn:
+        st.write("") # Alignment spacing
+        st.write("") 
+        if st.button("🎲 Surprise Me!", use_container_width=True):
+            st.session_state.selected_movie = random.choice(all_titles)
 
     st.markdown("---")
 
@@ -458,14 +406,14 @@ def main():
             overview = sel_row["overview"]
 
             # Spotlight poster
-            spotlight_poster = fetch_poster_url(sel_row['title'], movie_id=sel_row.get('id'), tmdb_key=tmdb_key)
+            spotlight_poster = fetch_poster_url(sel_row['title'])
 
-            col_spot_img, col_spot_info = st.columns([1, 3]) if spotlight_poster else (None, None)
+            col_spot_img, col_spot_info = st.columns([1, 4]) if spotlight_poster else (None, None)
 
             if spotlight_poster:
                 with col_spot_img:
                     st.markdown(
-                        f'<img src="{spotlight_poster}" style="width:100%; border-radius:12px; object-fit:cover; max-height:280px; border:1px solid #334155;">',
+                        f'<img src="{spotlight_poster}" style="width:100%; border-radius:12px; object-fit:cover; max-height:260px; border:1px solid #334155;">',
                         unsafe_allow_html=True
                     )
                 with col_spot_info:
@@ -539,7 +487,7 @@ def main():
                     
                     with cols[c_idx]:
                         # Automatic poster image resolution
-                        poster_url = fetch_poster_url(rec["title"], movie_id=rec["id"], tmdb_key=tmdb_key)
+                        poster_url = fetch_poster_url(rec["title"])
                         
                         genres_html = "".join([f'<span class="genre-pill">{g}</span>' for g in rec["genres"][:3]])
                         
@@ -572,6 +520,21 @@ def main():
                             """,
                             unsafe_allow_html=True,
                         )
+
+    # -----------------------------------------------------
+    # Clean Footer
+    # -----------------------------------------------------
+    st.markdown(
+        """
+        <div class="custom-footer">
+            Built with ❤️ using <strong>Streamlit</strong>, <strong>Scikit-Learn</strong> & <strong>TMDB 5000 Dataset</strong>
+            <br>
+            <a href="https://github.com/milanjyotiray/movie-recommendation-system" target="_blank" style="color: #8b5cf6; text-decoration: none; font-weight: 600;">💻 View on GitHub</a> | 
+            <a href="https://movie-recommendation-system-hejeg8p3u4tyfp9rvnst77.streamlit.app" target="_blank" style="color: #8b5cf6; text-decoration: none; font-weight: 600;">🌐 Live Streamlit App</a>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 if __name__ == "__main__":
     main()
